@@ -1,74 +1,119 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using Zwaj.BL.DTOs;
+using Zwaj.BL.Helper;
 using Zwaj.BL.Interfaces;
 using Zwaj.DAL.DataBase;
-using Zwaj.DAL.Entity;
+using Zwaj.DAL.Extend;
 
 namespace Zwaj.BL.Repository
 {
     public class AuthRep : IAuthRep
     {
-        private readonly AppDbContext context;
+        private readonly UserManager<User> userManager;
+        private readonly RoleManager<IdentityRole> roleManager;
+        private readonly IOptions<JWT> jwt;
 
-        public AuthRep(AppDbContext context)
+        public AuthRep(UserManager<User> userManager,RoleManager<IdentityRole> roleManager,IOptions<JWT> jwt)
         {
-            this.context = context;
-        }
-        public async Task<User> Login(string UserName, string Password)
-        {
-            var user = await context.Users.FirstOrDefaultAsync(u=>u.UserName == UserName);
-            if (user == null)
-                return null;
-            if (!VerfiyPasswordHash(Password, user.PasswordSalt, user.PasswordHash))
-                return null;
-            return user;
+            this.userManager = userManager;
+            this.roleManager = roleManager;
+            this.jwt = jwt;
         }
 
-        private bool VerfiyPasswordHash(string password, byte[] passwordSalt, byte[] passwordHash)
+        public async Task<AuthModel> Login(LoginDto login)
         {
-            using(var hmac = new System.Security.Cryptography.HMACSHA512(passwordSalt))
+            var user  = await userManager.FindByEmailAsync(login.Email);
+            if (user == null || !await userManager.CheckPasswordAsync(user,login.Password))
+                return new AuthModel { Message = "لايوجد بريد بهذا الاسم او كلمه السر غير صحيحه " };
+            var token = await createJwtToken(user);
+            return new AuthModel
             {
-                var ComputedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
-                for (int i = 0; i < ComputedHash.Length; i++)
+                Message = "تم تسجيل الدخول",
+                Token = new JwtSecurityTokenHandler().WriteToken(token),
+                IsAuthentcation = true,
+                Expire = token.ValidTo
+            };
+        }
+
+        public async Task<AuthModel> Register(RegisterDto register)
+        {
+            if (await userManager.FindByEmailAsync(register.Email) != null)
+            {
+                return new AuthModel { Message = "هذا البريد مستخدم من قبل" };
+            }
+            var user = new User
+            {
+                Email = register.Email,
+                UserName = register.Email,
+                Name = register.Name,
+            };
+
+            var result = await userManager.CreateAsync(user,register.Password);
+            if (!result.Succeeded)
+            {
+                var error = string.Empty;
+                foreach (var item in result.Errors)
                 {
-                    if (ComputedHash[i] != passwordHash[i])
-                    {
-                        return false;
-                    }
+                    error += $"{item.Description} , ";
                 }
-                return true;
+                return new AuthModel { Message = error };
             }
-        }
 
-        public async Task<User> Register(User user, string Password)
-        {
-            byte[] passwordHash, passwordSalt;
-            createPassHash(Password, out passwordHash, out passwordSalt);
-            user.PasswordSalt = passwordSalt;
-            user.PasswordHash = passwordHash;
-
-            await context.Users.AddAsync(user);
-            await context.SaveChangesAsync();
-            return user;
-        }
-
-        private void createPassHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
-        {
-            
-            using (var hmac = new System.Security.Cryptography.HMACSHA512())
+            var RoleExsit = await roleManager.RoleExistsAsync("admin");
+            if (!RoleExsit)
             {
-                passwordSalt = hmac.Key;
-                passwordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
+                await roleManager.CreateAsync(new IdentityRole("admin"));
+                await userManager.AddToRoleAsync(user, "admin");
             }
+            else
+            {
+                await roleManager.CreateAsync(new IdentityRole("user"));
+                await userManager.AddToRoleAsync(user, "user");
+            }
+            var token = await createJwtToken(user);
+            return new AuthModel { Message = "تم تسجيل مستخدم جديد" ,Token = new JwtSecurityTokenHandler().WriteToken(token) ,IsAuthentcation = true,Expire = token.ValidTo};
         }
 
-        public async Task<bool> UserExsit(string UserName)
+        private async Task<JwtSecurityToken> createJwtToken(User user)
         {
-            return await context.Users.AnyAsync(x => x.UserName == UserName);
+            var userClaim = await userManager.GetClaimsAsync(user);
+            var userRoles = await userManager.GetRolesAsync(user);
+            var roleClaims = new List<Claim>();
+            foreach (var item in userRoles)
+            {
+                roleClaims.Add(new Claim("Roles",item));
+            }
+            var claims = new[]
+            {
+                new Claim(JwtRegisteredClaimNames.NameId,user.Id),
+                new Claim(JwtRegisteredClaimNames.Sub,user.Name),
+                new Claim(JwtRegisteredClaimNames.Email,user.Email),
+                new Claim(JwtRegisteredClaimNames.UniqueName,user.UserName),
+            }
+            .Union(userClaim)
+            .Union(roleClaims);
+
+            var Key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Value.Key));
+            var cred = new SigningCredentials(Key, SecurityAlgorithms.HmacSha256);
+
+            var jwtSecurityToken = new JwtSecurityToken(
+                issuer: jwt.Value.Issuer,
+                audience: jwt.Value.Audience,
+                claims: claims,
+                expires: DateTime.UtcNow.AddDays(jwt.Value.DurationInDay),
+                signingCredentials: cred
+                );
+            return jwtSecurityToken;
         }
     }
 }

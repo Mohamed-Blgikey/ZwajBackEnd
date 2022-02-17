@@ -8,7 +8,6 @@ using System.Text;
 using Zwaj.BL.DTOs;
 using Zwaj.BL.Helper;
 using Zwaj.BL.Interfaces;
-using Zwaj.DAL.Entity;
 
 namespace Zwaj.Controllers
 {
@@ -17,56 +16,36 @@ namespace Zwaj.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthRep rep;
-        private readonly IOptions<JWT> jwt;
 
-        public AuthController(IAuthRep rep,IOptions<JWT> jwt)
+        public AuthController(IAuthRep rep)
         {
             this.rep = rep;
-            this.jwt = jwt;
         }
 
         [HttpPost]
         [Route("~/Register")]
         public async Task<IActionResult> Register(RegisterDto data)
         {
-            data.UserName = data.UserName.ToLower();
-            if (await rep.UserExsit(data.UserName))
-            {
-                return BadRequest(new {message = "هذا المستخدم مسجل من قبل" });
-            }
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+            var result = await rep.Register(data);
+            if (!result.IsAuthentcation)
+                return Ok(new { message = result.Message });
 
-            var userToCreate = new User
-            {
-                UserName = data.UserName,
-            };
-            var user = await rep.Register(userToCreate, data.Password);
-            return Ok(new { message = "تم تسجيل مستخدم جديد" });
+            return Ok(result);
         }
 
         [HttpPost]
         [Route("~/Login")]
         public async Task<IActionResult> Login(LoginDto data)
         {
-            var user = await rep.Login(data.UserName.ToLower() , data.Password);
-            if (user == null)
-                return Unauthorized(new {message = "ليس لك صلاحيه بالدخول"});
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+            var result = await rep.Login(data);
+            if (!result.IsAuthentcation)
+                return Ok(new { message = result.Message });
 
-            var claims = new[]
-            {
-                new Claim(ClaimTypes.NameIdentifier,user.Id.ToString()),
-                new Claim(ClaimTypes.Name,user.UserName)
-            };
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Value.Key));
-            var cred = new SigningCredentials(key, SecurityAlgorithms.HmacSha512);
-            var tokenDescriptor = new SecurityTokenDescriptor()
-            {
-                Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.Now.AddDays(1),
-                SigningCredentials = cred
-            };
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            return Ok(new {token = tokenHandler.WriteToken(token)});
+            return Ok(result);
         }
     }
 }
