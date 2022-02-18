@@ -25,7 +25,10 @@ builder.Services.AddDbContext<AppDbContext>(opt =>
     opt.UseSqlServer(builder.Configuration.GetConnectionString("AppConnection")));
 builder.Services.AddIdentity<User,IdentityRole>()
     .AddEntityFrameworkStores<AppDbContext>();
+builder.Services.AddAutoMapper(a => a.AddProfile(new DomainProfile()));
 builder.Services.AddScoped<IAuthRep, AuthRep>();
+builder.Services.AddScoped<IZwajRep, ZwajRep>();
+
 builder.Services.AddCors(opt =>
 {
     opt.AddPolicy("CorsPolicy",b=>b.WithOrigins("*","http://localhost:4200").AllowAnyHeader().AllowAnyMethod());
