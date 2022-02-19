@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Zwaj.BL.DTOs;
 using Zwaj.BL.Interfaces;
+using Zwaj.DAL.Extend;
 
 namespace Zwaj.Controllers
 {
@@ -41,18 +42,18 @@ namespace Zwaj.Controllers
         }
 
         [HttpPut]
-        [Route("~/EditUser/{id}")]
-        public async Task<IActionResult> EditUser(string id,UserForUpdateDTO dTO)
+        [Route("~/EditUser")]
+        public async Task<IActionResult> EditUser(UserForUpdateDTO user)
         {
-            if (id != User.FindFirst(ClaimTypes.NameIdentifier).Value)
+            if (user.Id != User.FindFirst(ClaimTypes.NameIdentifier).Value)
                 return Unauthorized();
-
-            var user = await this.rep.GetUser(id);
-            user.Introduction = dTO.Introduction;
-            user.LookingFor = dTO.LookinFor;
-            user.Interests = dTO.Interests;
-            user.City = dTO.City;
-            user.Country = dTO.Country;
+            var ruser = await this.rep.GetUser(user.Id);
+            ruser.Introduction = user.Introduction;
+            ruser.LookingFor = user.LookinFor;
+            ruser.Interests = user.Interests;
+            ruser.City = user.City;
+            ruser.Country = user.Country;
+            rep.Edit(ruser);
             await rep.SaveAllAsync();
                 return Ok(new {message = "تم التعديل" });
         }

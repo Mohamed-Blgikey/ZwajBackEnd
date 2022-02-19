@@ -25,6 +25,11 @@ namespace Zwaj.BL.Repository
         {
             this.context.Remove(entity);
         }
+
+        public void Edit<T>(T entity) where T : class
+        {
+            this.context.Set<T>().Update(entity);
+        }
         public async Task<bool> SaveAllAsync()
         {
             return await this.context.SaveChangesAsync() > 1;

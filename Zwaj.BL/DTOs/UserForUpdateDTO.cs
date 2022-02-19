@@ -8,6 +8,7 @@ namespace Zwaj.BL.DTOs
 {
     public class UserForUpdateDTO
     {
+        public string Id { get; set; }
         public string Introduction { get; set; }
         public string LookinFor { get; set; }
         public string Interests { get; set; }
