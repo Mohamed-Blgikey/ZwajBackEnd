@@ -16,7 +16,10 @@ namespace Zwaj.BL.Helper
         {
             CreateMap<User, UserForListDTO>().ForMember(src => src.PhotoUrl, opt => { opt.MapFrom(src => src.Photos.FirstOrDefault(a => a.IsMain).Url); }); ;
             CreateMap<User, UserForDetailsDTO>().ForMember(dest => dest.PhotoUrl, opt => { opt.MapFrom(src => src.Photos.FirstOrDefault(a => a.IsMain).Url); });
+
             CreateMap<Photo, PhotoForDetailsDTO>();
+
+            CreateMap<UserForUpdateDTO, User>();
         }
     }
 }
