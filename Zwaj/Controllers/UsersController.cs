@@ -57,5 +57,49 @@ namespace Zwaj.Controllers
             await rep.SaveAllAsync();
                 return Ok(new {message = "تم التعديل" });
         }
+
+        [Route("~/SavePhoto")]
+        [HttpPost]
+        public async Task<IActionResult> SaveFile()
+        {
+            try
+            {
+                var httpRequest = Request.Form;
+                var postedFile = httpRequest.Files[0];
+                string filename = Guid.NewGuid() + postedFile.FileName;
+                var physicalPath = Directory.GetCurrentDirectory() + "/wwwroot/Img/" + filename;
+
+                using (var stream = new FileStream(physicalPath, FileMode.Create))
+                {
+                    await postedFile.CopyToAsync(stream);
+                }
+
+                return Ok(new { message = filename });
+            }
+            catch (Exception)
+            {
+                return Ok(new { message = "Error !" });
+            }
+        }
+
+        [HttpPost]
+        [Route("~/UnSavePhoto")]
+        public JsonResult UnSaveFile([FromBody] PhotoDTO photoVM)
+        {
+            try
+            {
+                if (System.IO.File.Exists(Directory.GetCurrentDirectory() + "/wwwroot/Img/" + photoVM.Name))
+                {
+                    System.IO.File.Delete(Directory.GetCurrentDirectory() + "/wwwroot/Img/" + photoVM.Name);
+                }
+
+                return new JsonResult(new { message = "Deleted !" });
+            }
+            catch (Exception)
+            {
+
+                return new JsonResult("Error!");
+            }
+        }
     }
 }
