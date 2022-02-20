@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Zwaj.DAL.Entity;
 using Zwaj.DAL.Extend;
 
 namespace Zwaj.BL.Interfaces
@@ -15,6 +16,8 @@ namespace Zwaj.BL.Interfaces
         Task<bool> SaveAllAsync();
         Task<IEnumerable<User>> GetUsers();
         Task<User> GetUser(string id);
+        Task<Photo> GetMainPhotoForUser(string userId);
+        Task<Photo> GetPhoto(int id);
 
     }
 }

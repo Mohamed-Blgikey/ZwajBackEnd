@@ -120,6 +120,65 @@ namespace Zwaj.Controllers
             }
         }
 
+        [HttpPost]
+        [Route("~/DeletePhoto")]
+        public async Task<IActionResult> DeletePhoto([FromBody] DeletePhotoDTO photoDTO)
+        {
+            if (photoDTO.UserId != User.FindFirst(ClaimTypes.NameIdentifier).Value)
+                return Ok(new { message = "غير مسموح لك" });
+
+
+            var userPhotoRepo = await rep.GetUser(photoDTO.UserId);
+
+            if (!userPhotoRepo.Photos.Any(a => a.Id == photoDTO.PhotoId))
+                return Ok(new { message = "لا توجد صوره لك" });
+
+
+            var Photo = await rep.GetPhoto(photoDTO.PhotoId);
+
+            if (!Photo.IsMain)
+            {
+                rep.Delete(Photo);
+                await rep.SaveAllAsync();
+                return Ok(new { message = "تم حذف الصوره" });
+            }
+            var newMain = userPhotoRepo.Photos.FirstOrDefault(p => p.IsMain == false);
+            newMain.IsMain = true;
+            rep.Delete(Photo);
+            await rep.SaveAllAsync();
+            return Ok(new { message = "تم حذف الصوره" });
+        }
+
+
+
+        [HttpPost]
+        [Route("~/SetMain")]
+        public async Task<IActionResult> SetMainPhoto(MainPhotoDTO photoDTO)
+        {
+            if (photoDTO.UserId != User.FindFirst(ClaimTypes.NameIdentifier).Value)
+                return Ok(new { message = "غير مسموح لك" });
+
+
+            var userPhotoRepo = await rep.GetUser(photoDTO.UserId);
+
+            if (!userPhotoRepo.Photos.Any(a=>a.Id == photoDTO.PhotoId))
+                return Ok(new {message = "لا توجد صوره لك" });
+
+
+            var desiredmainPhoto = await rep.GetPhoto(photoDTO.PhotoId);
+
+            if (desiredmainPhoto.IsMain)
+                return Ok(new {message = "هذه الصوره الاساسيه بالفغل" });
+
+            var currentPhoto = await rep.GetMainPhotoForUser(photoDTO.UserId);
+
+            currentPhoto.IsMain = false;
+            desiredmainPhoto.IsMain = true;
+            await rep.SaveAllAsync();
+            return Ok(new { message = "تم التعديل" });
+
+        }
+
 
 
     }

@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Zwaj.BL.Interfaces;
 using Zwaj.DAL.DataBase;
+using Zwaj.DAL.Entity;
 using Zwaj.DAL.Extend;
 
 namespace Zwaj.BL.Repository
@@ -38,6 +39,18 @@ namespace Zwaj.BL.Repository
         {
             var users = this.context.Users.Include(u => u.Photos).Select(a=>a);
             return users;
+        }
+
+        public async Task<Photo> GetMainPhotoForUser(string userId)
+        {
+            return await context.MyProperty.Where(u => u.UserId == userId).FirstOrDefaultAsync(p => p.IsMain);
+
+        }
+
+        public async Task<Photo> GetPhoto(int id)
+        {
+            var photo = await context.MyProperty.FirstOrDefaultAsync(p => p.Id == id);
+            return photo;
         }
         public async Task<User> GetUser(string id)
         {
