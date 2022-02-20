@@ -21,6 +21,7 @@ namespace Zwaj.BL.Helper
 
             CreateMap<UserForUpdateDTO, User>();
             CreateMap<PhotoForUserDTO, Photo>();
+            CreateMap<RegisterDto, User>();
         }
     }
 }

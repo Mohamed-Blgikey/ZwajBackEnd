@@ -9,6 +9,7 @@ namespace Zwaj.BL.Helper
     public class AuthModel
     {
         public string Message { get; set; }
+        public string UserId { get; set; }
         public string Token { get; set; }
         public bool IsAuthentcation { get; set; }
         public DateTime Expire { get; set; }

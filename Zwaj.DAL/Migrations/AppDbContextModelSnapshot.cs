@@ -185,7 +185,7 @@ namespace Zwaj.DAL.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("MyProperty");
+                    b.ToTable("MyProperty", (string)null);
                 });
 
             modelBuilder.Entity("Zwaj.DAL.Extend.User", b =>

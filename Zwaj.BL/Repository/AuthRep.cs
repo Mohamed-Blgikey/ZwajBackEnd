@@ -56,6 +56,13 @@ namespace Zwaj.BL.Repository
                 Email = register.Email,
                 UserName = register.Email,
                 Name = register.Name,
+                Gender =register.Gender ,
+                City = register.City ,
+                Country =register.Country ,
+                DateOfBirth = register.DateOfBirth,
+                Interests = register.Interests,
+                Introduction = register.Introduction,
+                LookingFor = register.LookingFor
             };
 
             var result = await userManager.CreateAsync(user,register.Password);
@@ -81,7 +88,7 @@ namespace Zwaj.BL.Repository
                 await userManager.AddToRoleAsync(user, "user");
             }
             var token = await createJwtToken(user);
-            return new AuthModel { Message = "تم تسجيل مستخدم جديد" ,Token = new JwtSecurityTokenHandler().WriteToken(token) ,IsAuthentcation = true,Expire = token.ValidTo};
+            return new AuthModel { Message = "تم تسجيل مستخدم جديد",UserId = user.Id ,Token = new JwtSecurityTokenHandler().WriteToken(token) ,IsAuthentcation = true,Expire = token.ValidTo};
         }
 
         private async Task<JwtSecurityToken> createJwtToken(User user)
