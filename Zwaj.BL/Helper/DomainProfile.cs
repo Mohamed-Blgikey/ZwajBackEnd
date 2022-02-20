@@ -20,6 +20,7 @@ namespace Zwaj.BL.Helper
             CreateMap<Photo, PhotoForDetailsDTO>();
 
             CreateMap<UserForUpdateDTO, User>();
+            CreateMap<PhotoForUserDTO, Photo>();
         }
     }
 }

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Zwaj.BL.DTOs;
 using Zwaj.BL.Interfaces;
+using Zwaj.DAL.Entity;
 using Zwaj.DAL.Extend;
 
 namespace Zwaj.Controllers
@@ -101,5 +102,25 @@ namespace Zwaj.Controllers
                 return new JsonResult("Error!");
             }
         }
+
+        [HttpPost]
+        [Route("~/AddPhoto")]
+        public async Task<IActionResult> AddPhotoToUser([FromBody] PhotoForUserDTO photoDto)
+        {
+            try
+            {
+                var photo = mapper.Map<Photo>(photoDto);
+                rep.Add(photo);
+                await rep.SaveAllAsync();
+                return Ok(photo);
+            }
+            catch (Exception)
+            {
+                return BadRequest();
+            }
+        }
+
+
+
     }
 }
