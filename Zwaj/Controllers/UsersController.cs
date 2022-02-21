@@ -109,6 +109,11 @@ namespace Zwaj.Controllers
         {
             try
             {
+                var main =  await rep.GetMainPhotoForUser(photoDto.UserId);
+                if (main == null)
+                {
+                    photoDto.IsMain = true;
+                }
                 var photo = mapper.Map<Photo>(photoDto);
                 rep.Add(photo);
                 await rep.SaveAllAsync();
