@@ -75,5 +75,20 @@ namespace Zwaj.BL.Repository
                 return user.Likees.Select(a => a.LikeeId);
             }
         }
+
+        public async Task<Message> GetMessage(int id)
+        {
+            return await context.Messages.FirstOrDefaultAsync(m => m.id == id);
+        }
+
+        public Task<PagedList<Message>> GetMessagesForUser()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IEnumerable<Message>> GetConversation(string userId, string recipientId)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

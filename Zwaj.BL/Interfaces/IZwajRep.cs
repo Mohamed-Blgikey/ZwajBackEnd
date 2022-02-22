@@ -19,8 +19,10 @@ namespace Zwaj.BL.Interfaces
         Task<User> GetUser(string id);
         Task<Photo> GetMainPhotoForUser(string userId);
         Task<Photo> GetPhoto(int id);
-
         Task<Like> GetLike(string userID,string likeeId);
+        Task<Message> GetMessage(int id);
+        Task<PagedList<Message>> GetMessagesForUser();
+        Task<IEnumerable<Message>> GetConversation(string userId,string recipientId);
 
     }
 }

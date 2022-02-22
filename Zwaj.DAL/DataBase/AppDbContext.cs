@@ -28,10 +28,22 @@ namespace Zwaj.DAL.DataBase
                 .HasForeignKey(l => l.LikerId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            builder.Entity<Message>()
+                .HasOne(m => m.Sender)
+                .WithMany(u => u.messageSent)
+                .HasForeignKey(m => m.SenderId)
+                .OnDelete(DeleteBehavior.Restrict);
+            builder.Entity<Message>()
+                .HasOne(m => m.Recipient)
+                .WithMany(u => u.messagerecieved)
+                .HasForeignKey(m => m.RecipientId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             base.OnModelCreating(builder);
         }
 
         public DbSet<Photo> MyProperty { get; set; }
         public DbSet<Like> Likes  { get; set; }
+        public DbSet<Message> Messages { get; set; }
     }
 }
