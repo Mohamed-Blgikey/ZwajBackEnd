@@ -4,12 +4,14 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Zwaj.BL.DTOs;
+using Zwaj.BL.Helper;
 using Zwaj.BL.Interfaces;
 using Zwaj.DAL.Entity;
 using Zwaj.DAL.Extend;
 
 namespace Zwaj.Controllers
 {
+    [ServiceFilter(typeof(LogUserActivity))]
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
@@ -26,10 +28,11 @@ namespace Zwaj.Controllers
 
         [HttpGet]
         [Route("~/GetUsers")]
-        public async Task<IActionResult> GetUsers()
+        public async Task<IActionResult> GetUsers([FromQuery]UserParams userParams)
         {
-            var users = await this.rep.GetUsers();
+            var users = await rep.GetUsers(userParams);
             var rusers = mapper.Map<IEnumerable<UserForListDTO>>(users);
+            Response.AddPagination(users.CurrentPage, users.PageSize, users.TotalCount, users.TotalPages);
             return Ok(rusers);
         }
 
@@ -185,6 +188,27 @@ namespace Zwaj.Controllers
         }
 
 
-
+        [HttpPost]
+        [Route("~/{userId}/Like/{likeeId}")]
+        public async Task<IActionResult> Like(string userId,string likeeId)
+        {
+            if (userId != User.FindFirst(ClaimTypes.NameIdentifier).Value)
+            {
+                return Unauthorized();
+            }
+            var like = await rep.GetLike(userId,likeeId);
+            if (like != null)
+                return BadRequest(new { message = "لقد قمت بالاعجاب من قبل " });
+            if (await rep.GetUser(likeeId) == null)
+                return NotFound(new { message = "غير موجوود" });
+            like = new Like
+            {
+                LikerId = userId,
+                LikeeId = likeeId
+            };
+            rep.Add(like);
+            await rep.SaveAllAsync();
+            return Ok(new {message = "تم الاعجاب"});
+        }
     }
 }

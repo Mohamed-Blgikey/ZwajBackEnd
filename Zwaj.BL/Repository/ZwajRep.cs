@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Zwaj.BL.Helper;
 using Zwaj.BL.Interfaces;
 using Zwaj.DAL.DataBase;
 using Zwaj.DAL.Entity;
@@ -20,25 +21,25 @@ namespace Zwaj.BL.Repository
         }
         public void Add<T>(T entity) where T : class
         {
-            this.context.Add(entity);
+            context.Add(entity);
         }
         public void Delete<T>(T entity) where T : class
         {
-            this.context.Remove(entity);
+            context.Remove(entity);
         }
 
         public void Edit<T>(T entity) where T : class
         {
-            this.context.Set<T>().Update(entity);
+            context.Set<T>().Update(entity);
         }
         public async Task<bool> SaveAllAsync()
         {
-            return await this.context.SaveChangesAsync() > 1;
+            return await context.SaveChangesAsync() > 1;
         }
-        public async Task<IEnumerable<User>> GetUsers()
+        public async Task<PagedList<User>> GetUsers(UserParams userParams)
         {
-            var users = this.context.Users.Include(u => u.Photos).Select(a=>a);
-            return users;
+            var users = context.Users.Include(u => u.Photos);
+            return await PagedList<User>.GreateAsync(users, userParams.PageNumber, userParams.PageSize);
         }
 
         public async Task<Photo> GetMainPhotoForUser(string userId)
@@ -56,6 +57,23 @@ namespace Zwaj.BL.Repository
         {
             var user = await this.context.Users.Include(u => u.Photos).FirstOrDefaultAsync(a => a.Id == id);
             return user;
+        }
+
+        public async Task<Like> GetLike(string userID, string likeeId)
+        {
+            return await context.Likes.FirstOrDefaultAsync(l=>l.LikerId == userID && l.LikeeId == likeeId);
+        }
+        private async Task<IEnumerable<string>> GetUserLikes(bool likers)
+        {
+            var user = await context.Users.Include(a => a.Likers).Include(a => a.Likees).FirstOrDefaultAsync();
+            if (likers)
+            {
+                return user.Likers.Select(a=>a.LikerId);
+            }
+            else
+            {
+                return user.Likees.Select(a => a.LikeeId);
+            }
         }
     }
 }

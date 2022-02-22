@@ -29,6 +29,7 @@ builder.Services.AddIdentity<User,IdentityRole>()
 builder.Services.AddAutoMapper(a => a.AddProfile(new DomainProfile()));
 builder.Services.AddScoped<IAuthRep, AuthRep>();
 builder.Services.AddScoped<IZwajRep, ZwajRep>();
+builder.Services.AddScoped<LogUserActivity>();
 
 builder.Services.AddCors(opt =>
 {

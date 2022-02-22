@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Zwaj.BL.Helper;
 using Zwaj.DAL.Entity;
 using Zwaj.DAL.Extend;
 
@@ -14,10 +15,12 @@ namespace Zwaj.BL.Interfaces
         void Delete<T>(T entity) where T : class;
         void Edit<T>(T entity) where T : class;
         Task<bool> SaveAllAsync();
-        Task<IEnumerable<User>> GetUsers();
+        Task<PagedList<User>> GetUsers(UserParams userParams);
         Task<User> GetUser(string id);
         Task<Photo> GetMainPhotoForUser(string userId);
         Task<Photo> GetPhoto(int id);
+
+        Task<Like> GetLike(string userID,string likeeId);
 
     }
 }
