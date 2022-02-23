@@ -81,14 +81,33 @@ namespace Zwaj.BL.Repository
             return await context.Messages.FirstOrDefaultAsync(m => m.id == id);
         }
 
-        public Task<PagedList<Message>> GetMessagesForUser()
+        public async Task<PagedList<Message>> GetMessagesForUser(MessageParams messageParams)
         {
-            throw new NotImplementedException();
+            var message = context.Messages.Include(m => m.Sender).ThenInclude(u => u.Photos)
+                .Include(m => m.Recipient).ThenInclude(u => u.Photos).AsQueryable();
+            switch (messageParams.MessageType)
+            {
+                case "Inbox":
+                    message = message.Where(m => m.RecipientId == messageParams.UserId);
+                    break;
+                case "Outbox":
+                    message = message.Where(m => m.SenderId == messageParams.UserId);
+                    break;
+                    //unresad
+                default:
+                    message = message.Where(m => m.RecipientId == messageParams.UserId&& m.IsRead ==false);
+                    break;
+            }
+            message = message.OrderByDescending(m => m.MessageSent);
+            return await PagedList<Message>.GreateAsync(message, messageParams.PageNumber, messageParams.PageSize); 
         }
 
-        public Task<IEnumerable<Message>> GetConversation(string userId, string recipientId)
+        public async Task<IEnumerable<Message>> GetConversation(string userId, string recipientId)
         {
-            throw new NotImplementedException();
+            var message = await context.Messages.Include(m => m.Sender).ThenInclude(u => u.Photos)
+               .Include(m => m.Recipient).ThenInclude(u => u.Photos).Where(u => u.RecipientId == userId && u.SenderId == recipientId || u.RecipientId == recipientId && u.SenderId == userId)
+               .OrderByDescending(m=>m.MessageSent).ToListAsync();
+            return message;
         }
     }
 }

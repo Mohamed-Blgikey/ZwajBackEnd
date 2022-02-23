@@ -10,13 +10,14 @@ using Zwaj.BL.Helper;
 using Zwaj.BL.Interfaces;
 using Zwaj.BL.Repository;
 using Zwaj.DAL.DataBase;
+using Zwaj.DAL.Entity;
 using Zwaj.DAL.Extend;
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
 builder.Services.AddControllers();
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -57,6 +58,8 @@ builder.Services.AddAuthentication(opt =>
         };
     });
 
+
+builder.Services.AddSignalR();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -96,6 +99,7 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 
 app.UseAuthorization();
+app.MapHub<CahtHub>("/chat");
 
 app.MapControllers();
 

@@ -3,23 +3,21 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Zwaj.DAL.Extend;
 
-namespace Zwaj.DAL.Entity
+namespace Zwaj.BL.DTOs
 {
-    public class Message
+    public class MessageToReturnDTO
     {
         public int id { get; set; }
         public string SenderId { get; set; }
-        public User Sender { get; set; }
+        public string SenderName { get; set; }
+        public string SenderPhotoUrl { get; set; } 
         public string RecipientId { get; set; }
-        public User Recipient { get; set; }
+        public string RecipientName { get; set; }
+        public string RecipientPhotoUrl { get; set; }
         public string Content { get; set; }
         public bool IsRead { get; set; }
         public DateTime? DateRead { get; set; }
         public DateTime MessageSent { get; set; }
-
-        public bool SenderDeleted { get; set; }
-        public bool RecipientDeleted { get; set; }
     }
 }
