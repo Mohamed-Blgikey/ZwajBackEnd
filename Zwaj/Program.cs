@@ -1,3 +1,5 @@
+using DinkToPdf;
+using DinkToPdf.Contracts;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Identity;
@@ -25,12 +27,22 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<AppDbContext>(opt =>
     opt.UseSqlServer(builder.Configuration.GetConnectionString("AppConnection")));
-builder.Services.AddIdentity<User,IdentityRole>()
-    .AddEntityFrameworkStores<AppDbContext>();
+
+builder.Services.AddIdentity<User, IdentityRole>(opt =>
+{
+    opt.Password.RequireNonAlphanumeric = false;
+    opt.Password.RequireUppercase = false;
+    opt.Password.RequireDigit = false;
+    opt.Password.RequiredLength = 4;
+})
+    .AddEntityFrameworkStores<AppDbContext>()
+    .AddRoleValidator<RoleValidator<IdentityRole>>();
+
 builder.Services.AddAutoMapper(a => a.AddProfile(new DomainProfile()));
 builder.Services.AddScoped<IAuthRep, AuthRep>();
 builder.Services.AddScoped<IZwajRep, ZwajRep>();
 builder.Services.AddScoped<LogUserActivity>();
+builder.Services.AddSingleton(typeof(IConverter),new SynchronizedConverter(new PdfTools()));
 
 builder.Services.AddCors(opt =>
 {
@@ -58,6 +70,10 @@ builder.Services.AddAuthentication(opt =>
         };
     });
 
+builder.Services.AddAuthorization(opt =>
+{
+    opt.AddPolicy("RequiredAdminRole", policy => policy.RequireRole("admin"));
+});
 
 builder.Services.AddSignalR();
 var app = builder.Build();

@@ -109,5 +109,41 @@ namespace Zwaj.BL.Repository
                .OrderByDescending(m=>m.MessageSent).ToListAsync();
             return message;
         }
+
+
+        public async Task<ICollection<User>> GetLikersOrLikees(string userId, string type)
+        {
+            var users = context.Users.Include(u => u.Photos).OrderBy(u => u.UserName).AsQueryable();
+            if (type == "likers")
+            {
+                var userLikers = await GetUserLikes(userId, true);
+                users = users.Where(u => userLikers.Contains(u.Id));
+            }
+            else if (type == "likees")
+            {
+                var userLikees = await GetUserLikes(userId, false);
+                users = users.Where(u => userLikees.Contains(u.Id));
+            }
+            else
+            {
+                throw new Exception("لا توجد بيانات متاحة");
+            }
+
+            return await users.ToListAsync();
+
+        }
+
+        private async Task<IEnumerable<string>> GetUserLikes(string id, bool Likers)
+        {
+            var user = await context.Users.Include(u => u.Likers).Include(u => u.Likees).FirstOrDefaultAsync(u => u.Id == id);
+            if (Likers)
+            {
+                return user.Likers.Where(u => u.LikeeId == id).Select(l => l.LikerId);
+            }
+            else
+            {
+                return user.Likees.Where(u => u.LikerId == id).Select(l => l.LikeeId);
+            }
+        }
     }
 }

@@ -24,5 +24,7 @@ namespace Zwaj.BL.Interfaces
         Task<PagedList<Message>> GetMessagesForUser(MessageParams messageParams);
         Task<IEnumerable<Message>> GetConversation(string userId,string recipientId);
 
+        Task<ICollection<User>> GetLikersOrLikees(string userId, string type);
+
     }
 }

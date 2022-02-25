@@ -1,4 +1,6 @@
 ﻿using AutoMapper;
+using DinkToPdf;
+using DinkToPdf.Contracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -14,16 +16,17 @@ namespace Zwaj.Controllers
     [ServiceFilter(typeof(LogUserActivity))]
     [Authorize]
     [Route("api/[controller]")]
-    [ApiController]
     public class UsersController : ControllerBase
     {
         private readonly IZwajRep rep;
         private readonly IMapper mapper;
+        private readonly IConverter converter;
 
-        public UsersController(IZwajRep rep,IMapper mapper)
+        public UsersController(IZwajRep rep,IMapper mapper,IConverter converter)
         {
             this.rep = rep;
             this.mapper = mapper;
+            this.converter = converter;
         }
 
         [HttpGet]
@@ -210,5 +213,42 @@ namespace Zwaj.Controllers
             await rep.SaveAllAsync();
             return Ok(new {message = "تم الاعجاب"});
         }
+
+        [HttpGet("UserReport/{userId}")]
+        public IActionResult CreatePdfForUser(string userId)
+        {
+            var templateGenerator = new TempleteGenerator(rep, mapper);
+            var globalSettings = new GlobalSettings
+            {
+                ColorMode = ColorMode.Color,
+                Orientation = Orientation.Portrait,
+                PaperSize = PaperKind.A4,
+                Margins = new MarginSettings { Top = 15, Bottom = 20 },
+                DocumentTitle = "بطاقة مشترك"
+
+            };
+
+            var objectSettings = new ObjectSettings
+            {
+                PagesCount = true,
+                HtmlContent = templateGenerator.GetHTMLStringForUser(userId),
+                WebSettings = { DefaultEncoding = "utf-8", UserStyleSheet = Path.Combine(Directory.GetCurrentDirectory(), "assets", "styles.css") },
+                HeaderSettings = { FontName = "Impact", FontSize = 12, Spacing = 5, Line = false },
+                FooterSettings = { FontName = "Geneva", FontSize = 15, Spacing = 7, Line = true, Center = "ZwajApp By Eng Muhammad Blgikey", Right = "[page]" }
+            };
+
+            var pdf = new HtmlToPdfDocument()
+            {
+                GlobalSettings = globalSettings,
+                Objects = { objectSettings }
+            };
+
+            var file = converter.Convert(pdf);
+            return File(file, "application/pdf");
+        }
+
+
+
+
     }
 }
